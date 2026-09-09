@@ -15,8 +15,6 @@
 //!
 //! Covers: `I2c::start_write`/`start_read`, `WriteTransfer`/`ReadTransfer`,
 //! `on_interrupt` entered from both the event and the error vector.
-//!
-//! **Not verified on hardware.**
 
 #![no_std]
 #![no_main]

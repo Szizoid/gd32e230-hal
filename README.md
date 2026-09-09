@@ -14,8 +14,8 @@ Rust from scratch on top of the [`gd32e2`](https://crates.io/crates/gd32e2) PAC.
 > `i2c`, `prelude`, `rcu`, `spi`, `time`, `timer`, `usart`, `watchdog`) plus
 > binaries in `examples/`, all of which are run on the board — RCU, GPIO, USART
 > (8/9-bit and parity), SPI0/SPI1, ADC, a one-shot DMA transfer, TIMER, delays,
-> PWM, input capture, I²C, CRC, FMC, both watchdogs, RTT. Unverified:
-> `i2c-interrupt`, and the option-byte fields other than the data bytes.
+> PWM, input capture, I²C and its interrupts, CRC, FMC, both watchdogs, RTT.
+> Unverified: the option-byte fields other than the data bytes.
 
 ### Principles
 
@@ -181,8 +181,8 @@ public, so an interrupt handler can be written by hand; `start_write` /
 whose `on_interrupt` advances a state machine, `release` giving back the
 peripheral, the buffer and the outcome. There is no interrupt-driven `write_read`.
 10-bit addressing, SMBus, slave mode and DMA are not implemented. The bench is an
-RP2040 in I²C target mode at 50 kHz; fast and fast plus, the interrupts and the
-transfers are implemented but unverified.
+RP2040 in I²C target mode at 50 kHz; fast and fast plus are implemented but
+unverified.
 
 **CRC** (`src/crc.rs`) — `Crc<PS>` generic over the polynomial width
 (`B32`/`B16`/`B8`/`B7`), fixed by the constructor, which also sets `POLY` and the
@@ -369,9 +369,9 @@ HAL для **GD32E230K8U6** (Cortex-M23), написанный с нуля на 
 > (`src/lib.rs` → `adc`, `crc`, `dma`, `fmc`, `gpio`, `i2c`, `prelude`, `rcu`,
 > `spi`, `time`, `timer`, `usart`, `watchdog`) плюс бинарники в `examples/`, все
 > прогнаны на плате: RCU, GPIO, USART (8/9 бит и чётность), SPI0/SPI1, ADC,
-> разовая передача DMA, TIMER, задержки, PWM, input capture, I²C, CRC, FMC, оба
-> сторожа, RTT. Не проверено: `i2c-interrupt` и поля option bytes кроме байтов
-> данных.
+> разовая передача DMA, TIMER, задержки, PWM, input capture, I²C и прерывания
+> по нему, CRC, FMC, оба
+> сторожа, RTT. Не проверено: поля option bytes кроме байтов данных.
 
 ### Принципы
 
@@ -535,8 +535,7 @@ Table 2-13/2-14 даташита, — а набор разваренных пл�
 и `'static`-буфер и отдают тип передачи, чей `on_interrupt` двигает автомат, а
 `release` возвращает периферию, буфер и исход. `write_read` по прерываниям нет.
 10-битная адресация, SMBus, slave и DMA не реализованы. Стенд — RP2040 в режиме
-I²C target на 50 кГц; fast и fast plus, прерывания и передачи по ним написаны, но
-не проверены.
+I²C target на 50 кГц; fast и fast plus написаны, но не проверены.
 
 **CRC** (`src/crc.rs`) — `Crc<PS>` дженерик по ширине полинома
 (`B32`/`B16`/`B8`/`B7`), которую фиксирует конструктор, он же ставит `POLY` и
