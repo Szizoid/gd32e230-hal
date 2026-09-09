@@ -112,6 +112,7 @@ impl Port {
     ///
     /// `const` so that erasing a pin costs nothing: the letter is a constant at
     /// every call site, and the match folds away with it.
+    #[inline]
     const fn from_char(port: char) -> Self {
         match port {
             'A' => Port::A,
@@ -425,7 +426,8 @@ impl<const P: char, const N: u8> Pin<P, N, Debugger> {
 // State access takes the identity as arguments so `Pin` and `ErasedPin` share one
 // body apiece — the first passes constants, the second its fields. Configuration
 // helpers stay methods on `Pin`; an erased pin has no use for them.
-fn reg(port: Port) -> &'static pac::gpioa::RegisterBlock {
+#[inline]
+const fn reg(port: Port) -> &'static pac::gpioa::RegisterBlock {
     let ptr = match port {
         Port::A => pac::Gpioa::ptr(),
         Port::B => pac::Gpiob::ptr() as *const _,
@@ -439,24 +441,29 @@ fn reg(port: Port) -> &'static pac::gpioa::RegisterBlock {
     unsafe { &*ptr }
 }
 
+#[inline]
 fn read_pin(port: Port, number: u8) -> bool {
     let bits = reg(port).istat().read().bits();
     ((bits >> number) & 0b1) == 0b1
 }
 
+#[inline]
 fn read_octl(port: Port, number: u8) -> bool {
     let bits = reg(port).octl().read().bits();
     ((bits >> number) & 0b1) == 0b1
 }
 
+#[inline]
 fn set_bop(port: Port, number: u8) {
     reg(port).bop().write(|w| unsafe { w.bits(1 << number) });
 }
 
+#[inline]
 fn set_bc(port: Port, number: u8) {
     reg(port).bc().write(|w| unsafe { w.bits(1 << number) });
 }
 
+#[inline]
 fn set_tg(port: Port, number: u8) {
     reg(port).tg().write(|w| unsafe { w.bits(1 << number) });
 }

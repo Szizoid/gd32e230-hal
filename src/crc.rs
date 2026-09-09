@@ -48,7 +48,7 @@ pub struct CrcConfig {
 
 impl CrcConfig {
     /// Creates a configuration with the given input/output reversal.
-    pub fn new(reverse_input: ReverseInput, reverse_output: ReverseOutput) -> Self {
+    pub const fn new(reverse_input: ReverseInput, reverse_output: ReverseOutput) -> Self {
         Self {
             reverse_input,
             reverse_output,

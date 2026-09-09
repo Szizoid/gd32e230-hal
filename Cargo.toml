@@ -1,6 +1,6 @@
 [package]
 name = "gd32e2-hal"
-version = "0.25.1"
+version = "0.25.2"
 edition = "2024"
 authors = ["Szizoid"]
 description = "HAL for the GD32E23x series (Cortex-M23), currently the GD32E230"
@@ -8,7 +8,7 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/Szizoid/gd32e2-hal"
 keywords = ["gd32", "gd32e230", "cortex-m", "hal", "embedded-hal"]
 categories = ["embedded", "hardware-support", "no-std", "no-std::no-alloc"]
-exclude = [".cargo", ".gitignore", "docs", "memory.x", "rust-toolchain.toml"]
+exclude = [".cargo", ".gitignore", "docs", "rust-toolchain.toml"]
 
 # A part has to be named here too, there being no default: docs.rs would otherwise
 # build with `defmt` alone and stop at build.rs. It names the largest one — 48 pins

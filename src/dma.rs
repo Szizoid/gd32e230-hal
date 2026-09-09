@@ -98,6 +98,7 @@ macro_rules! channels {
                 ///
                 /// A `write`, not a `modify`, so leftover bits from an earlier use
                 /// reset to zero. Must run while `CHEN` is 0.
+                #[inline]
                 fn configure(&mut self, dir: Dir, width: Width, prio: Prio) {
                     self.reg().[<ch $N ctl>]().write(|w| {
                         let w = w.pnaga()
@@ -132,30 +133,37 @@ macro_rules! channels {
                     });
                 }
                 /// Points the channel at the peripheral data register.
+                #[inline]
                 fn set_paddr(&mut self, addr: u32) {
                     self.reg().[<ch $N paddr>]().write(|w| unsafe { w.bits(addr) });
                 }
                 /// Points the channel at the memory buffer.
+                #[inline]
                 fn set_maddr(&mut self, addr: u32) {
                     self.reg().[<ch $N maddr>]().write(|w| unsafe { w.bits(addr) });
                 }
                 /// Sets how many transfers the channel performs.
+                #[inline]
                 fn set_cnt(&mut self, cnt: u16) {
                     self.reg().[<ch $N cnt>]().write(|w| w.cnt().bits(cnt));
                 }
                 /// Transfers still outstanding; counts down as the channel runs.
+                #[inline]
                 fn cnt(&self) -> u16 {
                     self.reg().[<ch $N cnt>]().read().cnt().bits()
                 }
                 /// Starts or stops the channel.
+                #[inline]
                 fn set_enabled(&mut self, enabled: bool) {
                     self.reg().[<ch $N ctl>]().modify(|_, w| w.chen().bit(enabled));
                 }
                 /// Whether the channel has finished its last transfer.
+                #[inline]
                 fn is_complete(&self) -> bool {
                     self.reg().intf().read().[<ftfif $N>]().bit_is_set()
                 }
                 /// Whether the channel hit a bus error.
+                #[inline]
                 fn is_error(&self) -> bool {
                     self.reg().intf().read().[<errif $N>]().bit_is_set()
                 }
@@ -163,6 +171,7 @@ macro_rules! channels {
                 ///
                 /// `INTC` is write-one-to-clear, so zeroes leave the other
                 /// channels' bits alone. Never make this a `modify`.
+                #[inline]
                 fn clear_flags(&mut self) {
                     self.reg().intc().write(|w| w.[<gifc $N>]().set_bit());
                 }

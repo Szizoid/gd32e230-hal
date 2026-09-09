@@ -172,12 +172,15 @@ macro_rules! timer_instance {
     ($($TIMERX:ty => $clk:ident,)+) => {
         $(
             impl Instance for $TIMERX {
+                #[inline]
                 fn clk(clocks: &Clocks) -> Hertz {
                     clocks.$clk()
                 }
+                #[inline]
                 fn set_psc(&mut self, psc: u16) {
                     self.psc().write(|w| w.psc().bits(psc));
                 }
+                #[inline]
                 fn read_psc(&self) -> u16 {
                     self.psc().read().psc().bits()
                 }
@@ -185,35 +188,45 @@ macro_rules! timer_instance {
                 // in the SVD), safe on the other six; one macro body serves all.
                 // Every `u16` is a legal reload value in counting mode.
                 #[allow(unused_unsafe)]
+                #[inline]
                 fn set_car(&mut self, car: u16) {
                     self.car().write(|w| unsafe { w.car().bits(car) });
                 }
+                #[inline]
                 fn read_car(&self) -> u16 {
                     self.car().read().car().bits()
                 }
+                #[inline]
                 fn read_cnt(&self) -> u16 {
                     self.cnt().read().cnt().bits()
                 }
+                #[inline]
                 fn gen_update(&mut self) {
                     self.swevg().write(|w| w.upg().set_bit());
                 }
+                #[inline]
                 fn set_cen(&mut self, on: bool) {
                     self.ctl0().modify(|_, w| w.cen().bit(on));
                 }
+                #[inline]
                 fn set_ups(&mut self, on: bool) {
                     self.ctl0().modify(|_, w| w.ups().bit(on));
                 }
+                #[inline]
                 fn set_upie(&mut self, on: bool) {
                     self.dmainten().modify(|_, w| w.upie().bit(on));
                 }
+                #[inline]
                 fn read_upie(&self) -> bool {
                     self.dmainten().read().upie().bit_is_set()
                 }
+                #[inline]
                 fn read_upif(&self) -> bool {
                     self.intf().read().upif().bit_is_set()
                 }
                 // In `INTF` zero clears and one leaves alone, and its reset value
                 // is zero — so `write` would clear every flag it does not name.
+                #[inline]
                 fn clear_upif(&mut self) {
                     self.intf().modify(|_, w| w.upif().clear());
                 }

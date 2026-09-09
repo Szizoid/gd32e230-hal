@@ -179,17 +179,17 @@ pub struct UsartConfig {
 
 impl UsartConfig {
     /// Sets the bit rate. See the [`baud`] module for named constants.
-    pub fn baud(mut self, baud: Bps) -> Self {
+    pub const fn baud(mut self, baud: Bps) -> Self {
         self.baud = baud;
         self
     }
     /// Sets the oversampling ratio.
-    pub fn oversampling(mut self, oversampling: Oversampling) -> Self {
+    pub const fn oversampling(mut self, oversampling: Oversampling) -> Self {
         self.oversampling = oversampling;
         self
     }
     /// Sets the word length and parity.
-    pub fn frame_format(mut self, frame_format: FrameFormat) -> Self {
+    pub const fn frame_format(mut self, frame_format: FrameFormat) -> Self {
         self.frame_format = frame_format;
         self
     }
@@ -218,12 +218,12 @@ pub struct UsartConfig9 {
 
 impl UsartConfig9 {
     /// Sets the bit rate. See the [`baud`] module for named constants.
-    pub fn baud(mut self, baud: Bps) -> Self {
+    pub const fn baud(mut self, baud: Bps) -> Self {
         self.baud = baud;
         self
     }
     /// Sets the oversampling ratio.
-    pub fn oversampling(mut self, oversampling: Oversampling) -> Self {
+    pub const fn oversampling(mut self, oversampling: Oversampling) -> Self {
         self.oversampling = oversampling;
         self
     }

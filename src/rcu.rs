@@ -189,26 +189,32 @@ pub struct Clocks {
 
 impl Clocks {
     /// AHB clock, which also clocks the core.
+    #[inline]
     pub fn hclk(&self) -> Hertz {
         self.hclk
     }
     /// APB1 bus clock.
+    #[inline]
     pub fn pclk1(&self) -> Hertz {
         self.pclk1
     }
     /// APB2 bus clock.
+    #[inline]
     pub fn pclk2(&self) -> Hertz {
         self.pclk2
     }
     /// System clock, before the AHB prescaler.
+    #[inline]
     pub fn sysclk(&self) -> Hertz {
         self.sysclk
     }
     /// Clock actually feeding USART0, per [`Usart0Sel`].
+    #[inline]
     pub fn usart0(&self) -> Hertz {
         self.usart0
     }
     /// Clock feeding the ADC. Zero while [`AdcSel::Off`] stands.
+    #[inline]
     pub fn ck_adc(&self) -> Hertz {
         self.ck_adc
     }
@@ -217,12 +223,14 @@ impl Clocks {
     /// Equal to [`pclk1`](Self::pclk1) only when the APB1 prescaler is
     /// [`ApbPsc::Div1`]; on every other divider the timers are fed twice the
     /// bus clock, so the bus clock cannot be used in a timer period formula.
+    #[inline]
     pub fn pclk1_tim(&self) -> Hertz {
         self.pclk1_tim
     }
     /// Clock feeding the timers on APB2 (TIMER0, TIMER14, TIMER15, TIMER16).
     ///
     /// Same doubling rule as [`pclk1_tim`](Self::pclk1_tim).
+    #[inline]
     pub fn pclk2_tim(&self) -> Hertz {
         self.pclk2_tim
     }
@@ -258,32 +266,32 @@ impl Default for ClockConfig {
 }
 
 impl ClockConfig {
-    fn pll_mul(desired: PllFreq) -> u32 {
+    const fn pll_mul(desired: PllFreq) -> u32 {
         (desired as u32) / PLL_SRC
     }
 
     /// Sets the AHB prescaler, dividing `sysclk` down to `hclk`.
-    pub fn hclk(mut self, psc: AhbPsc) -> Self {
+    pub const fn hclk(mut self, psc: AhbPsc) -> Self {
         self.hclk = psc;
         self
     }
     /// Sets the APB1 prescaler, dividing `hclk` down to `pclk1`.
-    pub fn pclk1(mut self, psc: ApbPsc) -> Self {
+    pub const fn pclk1(mut self, psc: ApbPsc) -> Self {
         self.pclk1 = psc;
         self
     }
     /// Sets the APB2 prescaler, dividing `hclk` down to `pclk2`.
-    pub fn pclk2(mut self, psc: ApbPsc) -> Self {
+    pub const fn pclk2(mut self, psc: ApbPsc) -> Self {
         self.pclk2 = psc;
         self
     }
     /// Picks the system clock source.
-    pub fn sysclk(mut self, src: SysClk) -> Self {
+    pub const fn sysclk(mut self, src: SysClk) -> Self {
         self.sysclk = src;
         self
     }
     /// Picks the USART0 clock source.
-    pub fn usart0_sel(mut self, src: Usart0Sel) -> Self {
+    pub const fn usart0_sel(mut self, src: Usart0Sel) -> Self {
         self.usart0_sel = src;
         self
     }
@@ -292,7 +300,7 @@ impl ClockConfig {
     /// Left at [`AdcSel::Off`] the ADC has no clock and [`Clocks::ck_adc`] stays
     /// zero — constructing an [`Adc`](crate::adc::Adc) would then divide by zero
     /// rather than silently hang in calibration.
-    pub fn adc_sel(mut self, sel: AdcSel) -> Self {
+    pub const fn adc_sel(mut self, sel: AdcSel) -> Self {
         self.adc_sel = sel;
         self
     }

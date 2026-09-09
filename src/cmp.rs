@@ -153,7 +153,7 @@ impl CmpConfig {
     ///
     /// Speed is a required argument and this type has no `Default`: it trades
     /// propagation delay against current draw, and neither choice is universal.
-    pub fn new(speed: Speed) -> Self {
+    pub const fn new(speed: Speed) -> Self {
         Self {
             speed,
             hysteresis: Hysteresis::None,
@@ -162,18 +162,18 @@ impl CmpConfig {
         }
     }
     /// Sets the hysteresis. Defaults to [`Hysteresis::None`].
-    pub fn hysteresis(mut self, hysteresis: Hysteresis) -> Self {
+    pub const fn hysteresis(mut self, hysteresis: Hysteresis) -> Self {
         self.hysteresis = hysteresis;
         self
     }
     /// Routes the output to a timer as well as the pin. Defaults to
     /// [`OutputSel::None`].
-    pub fn output_sel(mut self, output_sel: OutputSel) -> Self {
+    pub const fn output_sel(mut self, output_sel: OutputSel) -> Self {
         self.output_sel = output_sel;
         self
     }
     /// Sets the output polarity. Defaults to [`Polarity::NotInverted`].
-    pub fn polarity(mut self, polarity: Polarity) -> Self {
+    pub const fn polarity(mut self, polarity: Polarity) -> Self {
         self.polarity = polarity;
         self
     }

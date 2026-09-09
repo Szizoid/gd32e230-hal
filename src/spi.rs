@@ -96,7 +96,7 @@ impl SpiConfig {
     ///
     /// The prescaler is a required argument and this type has no `Default`: an
     /// SCK divider has no conventional value, so it must be chosen deliberately.
-    pub fn new(psc: SpiPsc) -> Self {
+    pub const fn new(psc: SpiPsc) -> Self {
         Self {
             psc,
             mode: MODE_0,
@@ -104,12 +104,12 @@ impl SpiConfig {
         }
     }
     /// Sets the clock polarity and phase (CPOL/CPHA), per the slave's datasheet.
-    pub fn mode(mut self, mode: Mode) -> Self {
+    pub const fn mode(mut self, mode: Mode) -> Self {
         self.mode = mode;
         self
     }
     /// Sets the bit order. Defaults to [`BitOrder::MsbFirst`].
-    pub fn bit_order(mut self, bit_order: BitOrder) -> Self {
+    pub const fn bit_order(mut self, bit_order: BitOrder) -> Self {
         self.bit_order = bit_order;
         self
     }
@@ -250,6 +250,7 @@ pub trait Instance: Enable + Reset {
 }
 
 impl Instance for pac::Spi0 {
+    #[inline]
     fn apply_config(&mut self, config: SpiConfig, wide: bool) {
         self.ctl0().modify(|_, w| {
             let w = w
@@ -272,18 +273,23 @@ impl Instance for pac::Spi0 {
             unsafe { w.psc().bits(config.psc as u8) }
         });
     }
+    #[inline]
     fn tbe(&self) -> bool {
         self.stat().read().tbe().bit_is_set()
     }
+    #[inline]
     fn rbne(&self) -> bool {
         self.stat().read().rbne().bit_is_set()
     }
+    #[inline]
     fn write_data(&mut self, word: u16) {
         self.data().write(|w| unsafe { w.data().bits(word) });
     }
+    #[inline]
     fn read_data(&mut self) -> u16 {
         self.data().read().data().bits()
     }
+    #[inline]
     fn take_error(&mut self) -> Option<Error> {
         let stat = self.stat().read();
         if stat.rxorerr().bit_is_set() {
@@ -303,30 +309,38 @@ impl Instance for pac::Spi0 {
             None
         }
     }
+    #[inline]
     fn set_enabled(&mut self, on: bool) {
         self.ctl0().modify(|_, w| w.spien().bit(on));
     }
+    #[inline]
     fn set_rbneie(&mut self, on: bool) {
         self.ctl1().modify(|_, w| w.rbneie().bit(on));
     }
+    #[inline]
     fn rbneie(&self) -> bool {
         self.ctl1().read().rbneie().bit_is_set()
     }
+    #[inline]
     fn set_tbeie(&mut self, on: bool) {
         self.ctl1().modify(|_, w| w.tbeie().bit(on));
     }
+    #[inline]
     fn tbeie(&self) -> bool {
         self.ctl1().read().tbeie().bit_is_set()
     }
+    #[inline]
     fn set_errie(&mut self, on: bool) {
         self.ctl1().modify(|_, w| w.errie().bit(on));
     }
+    #[inline]
     fn errie(&self) -> bool {
         self.ctl1().read().errie().bit_is_set()
     }
 }
 
 impl Instance for pac::Spi1 {
+    #[inline]
     fn apply_config(&mut self, config: SpiConfig, wide: bool) {
         self.ctl1().modify(|_, w| {
             let w = w.byten().bit(!wide);
@@ -351,18 +365,23 @@ impl Instance for pac::Spi1 {
             unsafe { w.psc().bits(config.psc as u8) }
         });
     }
+    #[inline]
     fn tbe(&self) -> bool {
         self.stat().read().tbe().bit_is_set()
     }
+    #[inline]
     fn rbne(&self) -> bool {
         self.stat().read().rbne().bit_is_set()
     }
+    #[inline]
     fn write_data(&mut self, word: u16) {
         self.data().write(|w| unsafe { w.data().bits(word) });
     }
+    #[inline]
     fn read_data(&mut self) -> u16 {
         self.data().read().data().bits()
     }
+    #[inline]
     fn take_error(&mut self) -> Option<Error> {
         let stat = self.stat().read();
         if stat.rxorerr().bit_is_set() {
@@ -382,24 +401,31 @@ impl Instance for pac::Spi1 {
             None
         }
     }
+    #[inline]
     fn set_enabled(&mut self, on: bool) {
         self.ctl0().modify(|_, w| w.spien().bit(on));
     }
+    #[inline]
     fn set_rbneie(&mut self, on: bool) {
         self.ctl1().modify(|_, w| w.rbneie().bit(on));
     }
+    #[inline]
     fn rbneie(&self) -> bool {
         self.ctl1().read().rbneie().bit_is_set()
     }
+    #[inline]
     fn set_tbeie(&mut self, on: bool) {
         self.ctl1().modify(|_, w| w.tbeie().bit(on));
     }
+    #[inline]
     fn tbeie(&self) -> bool {
         self.ctl1().read().tbeie().bit_is_set()
     }
+    #[inline]
     fn set_errie(&mut self, on: bool) {
         self.ctl1().modify(|_, w| w.errie().bit(on));
     }
+    #[inline]
     fn errie(&self) -> bool {
         self.ctl1().read().errie().bit_is_set()
     }

@@ -63,24 +63,24 @@ fn ob_word(low: u8, high: u8) -> u32 {
 }
 
 /// The `OB_WP` bit covering `page`, one bit standing for four pages.
-fn wp_bit(page: Page) -> u32 {
+const fn wp_bit(page: Page) -> u32 {
     let number = (page as u32 - BASE) / PAGE_SIZE;
     1 << (number / PAGES_PER_WP_BIT)
 }
 
 /// Whether an `OB_WP` mask protects the group holding `page`; a protected group
 /// reads 0.
-fn wp_protected(wp: u32, page: Page) -> bool {
+const fn wp_protected(wp: u32, page: Page) -> bool {
     wp & wp_bit(page) == 0
 }
 
 /// Reads one bit of `OB_USER`.
-fn user_bit(user: u8, bit: u8) -> bool {
+const fn user_bit(user: u8, bit: u8) -> bool {
     user & (1 << bit) != 0
 }
 
 /// Returns `OB_USER` with one bit set to `on`, the rest untouched.
-fn set_user_bit(user: u8, bit: u8, on: bool) -> u8 {
+const fn set_user_bit(user: u8, bit: u8, on: bool) -> u8 {
     match on {
         true => user | (1 << bit),
         false => user & !(1 << bit),
@@ -168,7 +168,7 @@ impl ProtectionLevel {
     /// A separate type rather than a discriminant of this one: the same level is
     /// spelled one way in `OB_SPC` and another in the `PLEVEL` field this enum is
     /// also read from.
-    fn spc(self) -> Spc {
+    const fn spc(self) -> Spc {
         match self {
             ProtectionLevel::None => Spc::None,
             ProtectionLevel::Low => Spc::Low,
@@ -275,55 +275,75 @@ impl Default for OptionBytes {
 
 impl OptionBytes {
     /// Leaves the flash readable by a debugger.
-    pub fn no_protection(mut self) -> Self {
+    pub const fn no_protection(mut self) -> Self {
         self.protection = ProtectionLevel::None;
         self
     }
     /// Refuses debugger access. Going back to
     /// [`no_protection`](Self::no_protection) later mass-erases the main flash.
-    pub fn protection_low(mut self) -> Self {
+    pub const fn protection_low(mut self) -> Self {
         self.protection = ProtectionLevel::Low;
         self
     }
     /// Refuses debugger access **for good**: after this the option bytes
     /// themselves can no longer be erased or reprogrammed, so no later call can
     /// undo it and the part keeps this setting for the rest of its life.
-    pub fn protection_high_forever(mut self) -> Self {
+    pub const fn protection_high_forever(mut self) -> Self {
         self.protection = ProtectionLevel::High;
         self
     }
     /// Picks which free watchdog the part starts with.
-    pub fn free_watchdog(mut self, watchdog: FreeWatchdog) -> Self {
-        self.user = set_user_bit(self.user, BIT_NWDG_SW, watchdog == FreeWatchdog::Software);
+    pub const fn free_watchdog(mut self, watchdog: FreeWatchdog) -> Self {
+        self.user = set_user_bit(
+            self.user,
+            BIT_NWDG_SW,
+            matches!(watchdog, FreeWatchdog::Software),
+        );
         self
     }
     /// Says what entering deep-sleep does.
-    pub fn deep_sleep(mut self, entry: LowPowerEntry) -> Self {
-        self.user = set_user_bit(self.user, BIT_NRST_DPSLP, entry == LowPowerEntry::Enter);
+    pub const fn deep_sleep(mut self, entry: LowPowerEntry) -> Self {
+        self.user = set_user_bit(
+            self.user,
+            BIT_NRST_DPSLP,
+            matches!(entry, LowPowerEntry::Enter),
+        );
         self
     }
     /// Says what entering standby does.
-    pub fn standby(mut self, entry: LowPowerEntry) -> Self {
-        self.user = set_user_bit(self.user, BIT_NRST_STDBY, entry == LowPowerEntry::Enter);
+    pub const fn standby(mut self, entry: LowPowerEntry) -> Self {
+        self.user = set_user_bit(
+            self.user,
+            BIT_NRST_STDBY,
+            matches!(entry, LowPowerEntry::Enter),
+        );
         self
     }
     /// Sets the level `BOOT1` is taken to have.
-    pub fn boot1(mut self, boot1: Boot1) -> Self {
-        self.user = set_user_bit(self.user, BIT_BOOT1_N, boot1 == Boot1::Low);
+    pub const fn boot1(mut self, boot1: Boot1) -> Self {
+        self.user = set_user_bit(self.user, BIT_BOOT1_N, matches!(boot1, Boot1::Low));
         self
     }
     /// Turns the VDDA monitor on or off.
-    pub fn vdda_monitor(mut self, monitor: VddaMonitor) -> Self {
-        self.user = set_user_bit(self.user, BIT_VDDA_VISOR, monitor == VddaMonitor::Enabled);
+    pub const fn vdda_monitor(mut self, monitor: VddaMonitor) -> Self {
+        self.user = set_user_bit(
+            self.user,
+            BIT_VDDA_VISOR,
+            matches!(monitor, VddaMonitor::Enabled),
+        );
         self
     }
     /// Turns the SRAM parity check on or off.
-    pub fn sram_parity(mut self, parity: SramParity) -> Self {
-        self.user = set_user_bit(self.user, BIT_SRAM_PARITY, parity == SramParity::Disabled);
+    pub const fn sram_parity(mut self, parity: SramParity) -> Self {
+        self.user = set_user_bit(
+            self.user,
+            BIT_SRAM_PARITY,
+            matches!(parity, SramParity::Disabled),
+        );
         self
     }
     /// Sets the two user data bytes, which the silicon never reads itself.
-    pub fn data(mut self, data: u16) -> Self {
+    pub const fn data(mut self, data: u16) -> Self {
         self.data = data;
         self
     }
@@ -331,68 +351,68 @@ impl OptionBytes {
     ///
     /// One `OB_WP` bit covers four pages, so this closes the three neighbours of
     /// `page` along with it.
-    pub fn protect(mut self, page: Page) -> Self {
+    pub const fn protect(mut self, page: Page) -> Self {
         self.wp &= !wp_bit(page);
         self
     }
     /// Opens `page`, and with it the three pages sharing its `OB_WP` bit.
-    pub fn unprotect(mut self, page: Page) -> Self {
+    pub const fn unprotect(mut self, page: Page) -> Self {
         self.wp |= wp_bit(page);
         self
     }
 
     /// The protection level this block asks for.
-    pub fn protection(&self) -> ProtectionLevel {
+    pub const fn protection(&self) -> ProtectionLevel {
         self.protection
     }
     /// Which free watchdog the part starts with.
-    pub fn get_free_watchdog(&self) -> FreeWatchdog {
+    pub const fn get_free_watchdog(&self) -> FreeWatchdog {
         match user_bit(self.user, BIT_NWDG_SW) {
             true => FreeWatchdog::Software,
             false => FreeWatchdog::Hardware,
         }
     }
     /// What entering deep-sleep does.
-    pub fn get_deep_sleep(&self) -> LowPowerEntry {
+    pub const fn get_deep_sleep(&self) -> LowPowerEntry {
         match user_bit(self.user, BIT_NRST_DPSLP) {
             true => LowPowerEntry::Enter,
             false => LowPowerEntry::Reset,
         }
     }
     /// What entering standby does.
-    pub fn get_standby(&self) -> LowPowerEntry {
+    pub const fn get_standby(&self) -> LowPowerEntry {
         match user_bit(self.user, BIT_NRST_STDBY) {
             true => LowPowerEntry::Enter,
             false => LowPowerEntry::Reset,
         }
     }
     /// The level `BOOT1` is taken to have.
-    pub fn get_boot1(&self) -> Boot1 {
+    pub const fn get_boot1(&self) -> Boot1 {
         match user_bit(self.user, BIT_BOOT1_N) {
             true => Boot1::Low,
             false => Boot1::High,
         }
     }
     /// Whether the VDDA monitor is on.
-    pub fn get_vdda_monitor(&self) -> VddaMonitor {
+    pub const fn get_vdda_monitor(&self) -> VddaMonitor {
         match user_bit(self.user, BIT_VDDA_VISOR) {
             true => VddaMonitor::Enabled,
             false => VddaMonitor::Disabled,
         }
     }
     /// Whether the SRAM parity check is on.
-    pub fn get_sram_parity(&self) -> SramParity {
+    pub const fn get_sram_parity(&self) -> SramParity {
         match user_bit(self.user, BIT_SRAM_PARITY) {
             true => SramParity::Disabled,
             false => SramParity::Enabled,
         }
     }
     /// The two user data bytes.
-    pub fn data_bytes(&self) -> u16 {
+    pub const fn data_bytes(&self) -> u16 {
         self.data
     }
     /// Whether this block closes `page` to erasing and programming.
-    pub fn is_protected(&self, page: Page) -> bool {
+    pub const fn is_protected(&self, page: Page) -> bool {
         wp_protected(self.wp, page)
     }
 }

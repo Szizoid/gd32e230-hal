@@ -247,18 +247,18 @@ pub enum I2cMode {
 
 impl I2cMode {
     /// Standard mode at `frequency`.
-    pub fn standard(frequency: Hertz) -> Self {
+    pub const fn standard(frequency: Hertz) -> Self {
         Self::Standard { frequency }
     }
     /// Fast mode at `frequency`, with the given duty cycle.
-    pub fn fast(frequency: Hertz, duty_cycle: DutyCycle) -> Self {
+    pub const fn fast(frequency: Hertz, duty_cycle: DutyCycle) -> Self {
         Self::Fast {
             frequency,
             duty_cycle,
         }
     }
     /// Fast mode plus at `frequency`, with the given duty cycle.
-    pub fn fast_plus(frequency: Hertz, duty_cycle: DutyCycle) -> Self {
+    pub const fn fast_plus(frequency: Hertz, duty_cycle: DutyCycle) -> Self {
         Self::FastPlus {
             frequency,
             duty_cycle,
