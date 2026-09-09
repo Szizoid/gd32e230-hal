@@ -95,24 +95,24 @@ macro_rules! i2c_pins {
 // nobody can obtain.
 i2c_pins!(
     pac::I2c0:
-        SDA: ['A' 10 : 4, #[cfg(pads_ge_24)] 'B' 7 : 1, #[cfg(pads_ge_48)] 'B' 9 : 1]
-        SCL: ['A' 9 : 4, #[cfg(pads_ge_24)] 'B' 6 : 1, #[cfg(pads_ge_qfn32)] 'B' 8 : 1],
+        SDA: ['A' 10 : 4, #[cfg(pads_ge_24)] 'B' 7 : 1, #[cfg(pads_ge_48)] 'B' 9 : 1, 'F' 0 : 1]
+        SCL: ['A' 9 : 4, #[cfg(pads_ge_24)] 'B' 6 : 1, #[cfg(pads_ge_qfn32)] 'B' 8 : 1, 'F' 1 : 1],
 );
 
-// ---- (1) GD32E230x4 only: PB10/PB11 AF1 are I2C0 ----
+// ---- (1) GD32E230x4 only: PB10/PB11 AF1 and PF6/PF7 AF0 are I2C0 ----
 #[cfg(chip_x4)]
 i2c_pins!(
     pac::I2c0:
-        SDA: [#[cfg(pads_ge_48)] 'B' 11 : 1]
-        SCL: [#[cfg(pads_ge_48)] 'B' 10 : 1],
+        SDA: [#[cfg(pads_ge_48)] 'B' 11 : 1, #[cfg(pads_ge_48)] 'F' 7 : 0]
+        SCL: [#[cfg(pads_ge_48)] 'B' 10 : 1, #[cfg(pads_ge_48)] 'F' 6 : 0],
 );
 
 // ---- (3) GD32E230x8 only: I2C1 exists, and PB10/PB11 AF1 belong to it ----
 #[cfg(chip_x8)]
 i2c_pins!(
     pac::I2c1:
-        SDA: ['A' 1 : 4, #[cfg(pads_ge_lqfp32)] 'A' 12 : 5, #[cfg(pads_ge_48)] 'B' 11 : 1, #[cfg(pads_ge_48)] 'B' 14 : 5]
-        SCL: ['A' 0 : 4, #[cfg(pads_ge_lqfp32)] 'A' 11 : 5, #[cfg(pads_ge_48)] 'B' 10 : 1, #[cfg(pads_ge_48)] 'B' 13 : 5]
+        SDA: ['A' 1 : 4, #[cfg(pads_ge_lqfp32)] 'A' 12 : 5, #[cfg(pads_ge_48)] 'B' 11 : 1, #[cfg(pads_ge_48)] 'B' 14 : 5, #[cfg(pads_ge_48)] 'F' 7 : 0]
+        SCL: ['A' 0 : 4, #[cfg(pads_ge_lqfp32)] 'A' 11 : 5, #[cfg(pads_ge_48)] 'B' 10 : 1, #[cfg(pads_ge_48)] 'B' 13 : 5, #[cfg(pads_ge_48)] 'F' 6 : 0]
 );
 
 /// Writes the bus timing to `CTL1`, `CKCFG` and `RT`, leaving the peripheral enabled.

@@ -92,8 +92,7 @@ macro_rules! exti_pin {
 }
 
 // Which ports bond a given pin number, gated exactly as the pins themselves are
-// in `gpio.rs`. Port C is left out: it has no `Parts`, so none of its pins can
-// be constructed to begin with.
+// in `gpio.rs`.
 exti_pin! {
     // ---- Port A ----
     'A' 0, 'A' 1, 'A' 2, 'A' 3, 'A' 4, 'A' 5, 'A' 6, 'A' 7,
@@ -120,6 +119,10 @@ exti_pin! {
     #[cfg(pads_ge_48)] 'B' 13,
     #[cfg(pads_ge_48)] 'B' 14,
     #[cfg(pads_ge_48)] 'B' 15,
+    // ---- Port C ----
+    #[cfg(pads_ge_48)] 'C' 13,
+    #[cfg(pads_ge_48)] 'C' 14,
+    #[cfg(pads_ge_48)] 'C' 15,
     // ---- Port F ----
     'F' 0, 'F' 1,
     #[cfg(pads_ge_48)] 'F' 6,

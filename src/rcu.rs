@@ -749,6 +749,12 @@ bus_en! {
     pac::Timer14 => apb2en, timer14en,
 }
 
+// Port C bonds three pads on the 48-pin package and none anywhere else.
+#[cfg(pads_ge_48)]
+bus_en! {
+    pac::Gpioc => ahben, pcen,
+}
+
 bus_rst! {
     pac::Gpioa => ahbrst, parst,
     pac::Gpiob => ahbrst, pbrst,
@@ -772,4 +778,9 @@ bus_rst! {
 #[cfg(has_timer14)]
 bus_rst! {
     pac::Timer14 => apb2rst, timer14rst,
+}
+
+#[cfg(pads_ge_48)]
+bus_rst! {
+    pac::Gpioc => ahbrst, pcrst,
 }

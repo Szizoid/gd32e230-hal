@@ -83,7 +83,8 @@ pub struct Locked<MODE> {
     _mode: PhantomData<MODE>,
 }
 
-/// A single pin: `P` is the port (`'A'`, `'B'` or `'F'`), `N` the pin number.
+/// A single pin: `P` is the port (`'A'`, `'B'`, `'C'` or `'F'`), `N` the pin
+/// number.
 ///
 /// Zero-sized — the identity lives entirely in the type, so passing a pin around
 /// costs nothing at runtime.
@@ -101,6 +102,8 @@ pub struct Pin<const P: char, const N: u8, MODE> {
 pub enum Port {
     A,
     B,
+    #[cfg(pads_ge_48)]
+    C,
     F,
 }
 
@@ -113,6 +116,8 @@ impl Port {
         match port {
             'A' => Port::A,
             'B' => Port::B,
+            #[cfg(pads_ge_48)]
+            'C' => Port::C,
             'F' => Port::F,
             _ => unreachable!(),
         }
@@ -254,6 +259,12 @@ pin_af! {
     'B' 15 => [2: "TIMER0_CH2_ON"],
     // NB: 'B' 10 has no variant-independent AF — every one of its functions is
     // footnoted, so it appears only in the gated blocks below.
+    // ---- Port F ----
+    // The port has one function per pin, which is why `gpiof` in the PAC carries
+    // no `AFSEL0`/`AFSEL1` at all; the silicon does have them, and `reg()` reaches
+    // them by going through the port A register block.
+    'F' 0  => [1: "I2C0_SDA"],
+    'F' 1  => [1: "I2C0_SCL"],
 }
 
 // ---- (1) GD32E230x4 only ----
@@ -271,6 +282,10 @@ pin_af! {
     'B' 14 => [0: "SPI0_MISO"],
     #[cfg(pads_ge_48)]
     'B' 15 => [0: "SPI0_MOSI"],
+    #[cfg(pads_ge_48)]
+    'F' 6  => [0: "I2C0_SCL"],
+    #[cfg(pads_ge_48)]
+    'F' 7  => [0: "I2C0_SDA"],
 }
 
 // ---- (2) GD32E230x8/6 ----
@@ -317,6 +332,10 @@ pin_af! {
     'B' 14 => [0: "SPI1_MISO", 1: "TIMER14_CH0", 5: "I2C1_SDA"],
     #[cfg(pads_ge_48)]
     'B' 15 => [0: "SPI1_MOSI", 1: "TIMER14_CH1", 3: "TIMER14_CH0_ON"],
+    #[cfg(pads_ge_48)]
+    'F' 6  => [0: "I2C1_SCL"],
+    #[cfg(pads_ge_48)]
+    'F' 7  => [0: "I2C1_SDA"],
 }
 
 /// Marks a mode whose pin may be reconfigured.
@@ -410,7 +429,12 @@ fn reg(port: Port) -> &'static pac::gpioa::RegisterBlock {
     let ptr = match port {
         Port::A => pac::Gpioa::ptr(),
         Port::B => pac::Gpiob::ptr() as *const _,
-        Port::F => pac::Gpiof::ptr() as *const _, // AFSEL0/1 and LOCK registers are unavailable
+        // Ports C and F have no LOCK, and the PAC gives port F no AFSEL0/1
+        // either, though the silicon does — reaching them through this block is
+        // what makes `PF0`/`PF1`/`PF6`/`PF7` usable as alternate functions.
+        #[cfg(pads_ge_48)]
+        Port::C => pac::Gpioc::ptr() as *const _,
+        Port::F => pac::Gpiof::ptr() as *const _,
     };
     unsafe { &*ptr }
 }
@@ -1026,6 +1050,15 @@ gpio!(PartsB, pac::Gpiob, 'B', [
     #[cfg(pads_ge_48)] pb13:13:Input,
     #[cfg(pads_ge_48)] pb14:14:Input,
     #[cfg(pads_ge_48)] pb15:15:Input,
+]);
+
+// Port C bonds nothing below 48 pins, so the whole port goes rather than each of
+// its pins: an empty `Parts` would still offer a `split` for a port with no pads.
+#[cfg(pads_ge_48)]
+gpio!(PartsC, pac::Gpioc, 'C', [
+    pc13:13:Input,
+    pc14:14:Input,
+    pc15:15:Input,
 ]);
 
 gpio!(PartsF, pac::Gpiof, 'F', [

@@ -68,7 +68,7 @@ and error types. Off by default; also enables `embedded-hal/defmt-03`.
 Method-level detail is in the API docs; this is the shape of each module and what
 it does not cover.
 
-**GPIO** (`src/gpio.rs`) — const-generic `Pin<P, N, MODE>`, a ZST; ports A, B, F.
+**GPIO** (`src/gpio.rs`) — const-generic `Pin<P, N, MODE>`, a ZST; ports A, B, C, F.
 Modes as typestate: `Input`, `Analog`, `Output<PushPull>` / `Output<OpenDrain>`,
 `Alternate<AF, OTYPE>`, `Debugger` (`PA13`/`PA14`, left through
 `activate_into_*()`), `Locked<MODE>` (terminal — hardware has no `unlock`).
@@ -78,7 +78,12 @@ Modes as typestate: `Input`, `Analog`, `Output<PushPull>` / `Output<OpenDrain>`,
 `Result`-free, with `embedded-hal` 1.0 `OutputPin` / `InputPin` /
 `StatefulOutputPin` on the same helpers. `erase()` gives `ErasedPin<MODE>` — port
 and number as fields, mode still in the type, one way only. `Parts` holds only the
-pads the package bonds. Port C (`PC13`–`PC15`, 48-pin only) is not implemented.
+pads the package bonds, and port C is there on the 48-pin package alone — its
+three pins have no alternate function, so no AF map either. Port F does have
+them (`PF0` / `PF1` on AF1, `PF6` / `PF7` on AF0, all I²C) even though the PAC
+gives `gpiof` no `AFSEL` registers; the writes go through the port A block.
+`LOCK` exists on ports A and B only, which is what the `HasLock` bound says.
+Port C and `PF6` / `PF7` are compiled but never run — no 48-pin part here.
 
 **RCU** (`src/rcu.rs`) — `dp.rcu.constrain()` (`RcuExt`) gives `UnfrozenRcu`,
 whose only method `freeze(&mut fmc, config)` consumes it and returns the `Rcu`
@@ -229,7 +234,7 @@ drive the interrupt output and `listen_event` / `unlisten_event` /
 `is_pending` / `clear_interrupt` work the flag. Only the interrupt path latches
 `PD`. The pin lines share three vectors (`EXTI0_1`, `EXTI2_3`, `EXTI4_15`), so a
 handler asks which line is pending; the internal lines arrive on the vector of
-the peripheral behind them. Port C is absent here as it is in `gpio`.
+the peripheral behind them.
 
 **SYSCFG** (`src/syscfg.rs`) — `constrain(rcu)` takes the peripheral and
 switches on `CFGCMPEN`, the clock shared with CMP. Only `EXTISS` is covered, and
@@ -440,7 +445,7 @@ Table 2-13/2-14 даташита, — а набор разваренных пл�
 Подробности по методам — в документации API; здесь форма каждого модуля и то,
 чего в нём нет.
 
-**GPIO** (`src/gpio.rs`) — const-generic `Pin<P, N, MODE>`, ZST; порты A, B, F.
+**GPIO** (`src/gpio.rs`) — const-generic `Pin<P, N, MODE>`, ZST; порты A, B, C, F.
 Режимы как typestate: `Input`, `Analog`, `Output<PushPull>` / `Output<OpenDrain>`,
 `Alternate<AF, OTYPE>`, `Debugger` (`PA13`/`PA14`, выход через
 `activate_into_*()`), `Locked<MODE>` (терминальный — `unlock` нет и в железе).
@@ -450,7 +455,12 @@ Table 2-13/2-14 даташита, — а набор разваренных пл�
 `embedded-hal` 1.0 `OutputPin` / `InputPin` / `StatefulOutputPin` на тех же
 хелперах. `erase()` даёт `ErasedPin<MODE>` — порт и номер полями, режим остаётся в
 типе, только в одну сторону. `Parts` держит лишь те площадки, что разварены в
-корпусе. Порт C (`PC13`–`PC15`, только 48 выводов) не реализован.
+корпусе, а порт C есть только на 48-выводном: у трёх его ног нет ни одной
+альтернативной функции, поэтому нет и карты AF. У порта F они есть (`PF0` /
+`PF1` на AF1, `PF6` / `PF7` на AF0, всё это I²C), хотя в PAC у `gpiof` регистров
+`AFSEL` нет; запись идёт через блок порта A. `LOCK` есть только у портов A и B —
+это и говорит баунд `HasLock`. Порт C и `PF6` / `PF7` собираются, но не
+запускались: 48-выводного чипа нет.
 
 **RCU** (`src/rcu.rs`) — `dp.rcu.constrain()` (`RcuExt`) отдаёт `UnfrozenRcu`, у
 которого единственный метод `freeze(&mut fmc, config)` съедает значение и
@@ -719,9 +729,6 @@ probe-rs read  --chip GD32E230K8 b32 0x48000014 1   # например GPIOA_OCT
       9-битных слов.
 - [ ] FWDGT: оконный режим (`WND`); `FWDGT_HOLD` и `WWDGT_HOLD` в модуле DBG,
       чтобы сторожа не считали под остановленным отладчиком.
-- [ ] GPIO: порт C (`PC13`–`PC15`, только 48 выводов) — нужен свой `Parts`;
-      альтернативные функции порта F (регистра `AFSEL` нет — нужен отдельный
-      разбор).
 - [ ] RCU: `HXTAL` и `LXTAL` (ни один кварц на плате не запаян).
 
 **Инфраструктура**
