@@ -10,11 +10,13 @@ A hardware abstraction layer for the **GD32E230K8U6** (Cortex-M23), written in
 Rust from scratch on top of the [`gd32e2`](https://crates.io/crates/gd32e2) PAC.
 
 > ⚠️ **Work in progress.** Written by hand, incrementally; the API is unstable.
-> The package is a library (`src/lib.rs` → `adc`, `crc`, `dma`, `fmc`, `gpio`,
-> `i2c`, `prelude`, `rcu`, `spi`, `time`, `timer`, `usart`, `watchdog`) plus
+> The package is a library (`src/lib.rs` → `adc`, `cmp`, `crc`, `dma`, `exti`,
+> `fmc`, `gpio`, `i2c`, `prelude`, `rcu`, `spi`, `syscfg`, `time`, `timer`,
+> `usart`, `watchdog`) plus
 > binaries in `examples/`, all of which are run on the board — RCU, GPIO, USART
 > (8/9-bit and parity), SPI0/SPI1, ADC, a one-shot DMA transfer, TIMER, delays,
-> PWM, input capture, I²C and its interrupts, CRC, FMC, both watchdogs, RTT.
+> PWM, input capture, I²C and its interrupts, CRC, FMC, EXTI, both watchdogs,
+> RTT.
 > Unverified: the option-byte fields other than the data bytes.
 
 ### Principles
@@ -212,12 +214,31 @@ hysteresis, output routing and polarity. `enable` goes to `CmpRunning`, whose
 `output()` is read before the polarity multiplexer, so `Polarity` shows only on
 the pin, EXTI and the timer. `lock` freezes the register until the next system
 reset and leaves a type with no `disable` and no `release`. The clock is shared
-with SYSCFG (`CFGCMPEN`), so `release` leaves it on. EXTI is not implemented, so
-the comparator cannot raise an interrupt yet.
+with SYSCFG (`CFGCMPEN`), so `release` leaves it on. The output reaches EXTI
+line 21, which has not been tried on the board.
+
+**EXTI** (`src/exti.rs`) — external interrupts and events, 21 lines.
+`ExtiExt::split` consumes the peripheral and hands out one token per line; the
+reserved numbers have no field. Lines 0 to 15 arrive as `ExtiLine<N, PinSrc>`
+and take a pin through `source(syscfg, pin)`, which writes `EXTISS` and keeps
+the pin — `pin` / `pin_mut` reach it, `release` gives it back with the line
+disarmed. Lines 16, 17, 19, 21 and 25 are `InternalSrc` and need no pin.
+`edge(EdgeTrigger)` sets `RTEN` / `FTEN`; `listen` / `unlisten` / `is_listening`
+drive the interrupt output and `listen_event` / `unlisten_event` /
+`is_listening_event` the event output; `pend` raises the line from software,
+`is_pending` / `clear_interrupt` work the flag. Only the interrupt path latches
+`PD`. The pin lines share three vectors (`EXTI0_1`, `EXTI2_3`, `EXTI4_15`), so a
+handler asks which line is pending; the internal lines arrive on the vector of
+the peripheral behind them. Port C is absent here as it is in `gpio`.
+
+**SYSCFG** (`src/syscfg.rs`) — `constrain(rcu)` takes the peripheral and
+switches on `CFGCMPEN`, the clock shared with CMP. Only `EXTISS` is covered, and
+not publicly: the port is picked through `ExtiLine::source`. The `PA11` / `PA12`
+and DMA remaps are not implemented.
 
 **Prelude** (`src/prelude.rs`) — split per peripheral (`prelude::gpio`, `::rcu`,
-`::dma`, `::fmc`, `::adc`, `::spi`, `::i2c`, `::timer`, `::watchdog`, `::time`,
-`::usart`). `usart` has `io` and `nb` for the two serial flavours — one or the
+`::dma`, `::fmc`, `::adc`, `::spi`, `::i2c`, `::timer`, `::watchdog`, `::exti`,
+`::syscfg`, `::time`, `::usart`). `usart` has `io` and `nb` for the two serial flavours — one or the
 other, their `read`/`write` landing on the same type and two same-named traits in
 scope making the call ambiguous (`E0034`). `use gd32e2_hal::prelude::*;` takes
 everything with `usart::io`. Traits are re-exported as `_`; types are not
@@ -311,12 +332,9 @@ Firmware that resets the board on purpose — the watchdogs, `reload_option_byte
 
 **Peripherals not covered at all**
 
-- [ ] `EXTI` and `SYSCFG` — external events on pins, the wakeup source for sleep
-      modes, and the `EXTI` source select. The same module carries the
-      `PA11`/`PA12` remap onto the `PA9`/`PA10` pads below 32 pins and the second
-      DMA channel map.
-- [ ] `PMU` — sleep / deep-sleep / standby, the wakeup pin, LDO. Waking needs
-      `EXTI` first.
+- [ ] `PMU` — sleep / deep-sleep / standby, the wakeup pin, LDO.
+- [ ] The rest of `SYSCFG` — the `PA11`/`PA12` remap onto the `PA9`/`PA10` pads
+      below 32 pins and the second DMA channel map.
 - [ ] `embedded-storage` (`ReadNorFlash` / `NorFlash`) over the FMC.
 - [ ] `RTC` — the calendar. Runs off IRC40K without a crystal, at IRC40K accuracy.
 
@@ -366,12 +384,12 @@ HAL для **GD32E230K8U6** (Cortex-M23), написанный с нуля на 
 [`gd32e2`](https://crates.io/crates/gd32e2).
 
 > ⚠️ **В работе.** Пишется руками, по частям; API нестабилен. Пакет — библиотека
-> (`src/lib.rs` → `adc`, `crc`, `dma`, `fmc`, `gpio`, `i2c`, `prelude`, `rcu`,
-> `spi`, `time`, `timer`, `usart`, `watchdog`) плюс бинарники в `examples/`, все
-> прогнаны на плате: RCU, GPIO, USART (8/9 бит и чётность), SPI0/SPI1, ADC,
-> разовая передача DMA, TIMER, задержки, PWM, input capture, I²C и прерывания
-> по нему, CRC, FMC, оба
-> сторожа, RTT. Не проверено: поля option bytes кроме байтов данных.
+> (`src/lib.rs` → `adc`, `cmp`, `crc`, `dma`, `exti`, `fmc`, `gpio`, `i2c`,
+> `prelude`, `rcu`, `spi`, `syscfg`, `time`, `timer`, `usart`, `watchdog`) плюс
+> бинарники в `examples/`, все прогнаны на плате: RCU, GPIO, USART (8/9 бит и
+> чётность), SPI0/SPI1, ADC, разовая передача DMA, TIMER, задержки, PWM, input
+> capture, I²C и прерывания по нему, CRC, FMC, EXTI, оба сторожа, RTT.
+> Не проверено: поля option bytes кроме байтов данных.
 
 ### Принципы
 
@@ -565,12 +583,30 @@ I²C target на 50 кГц; fast и fast plus написаны, но не про
 `output()` читается до мультиплексора полярности, поэтому `Polarity` видна
 только на ноге, EXTI и таймере. `lock` замораживает регистр до системного сброса
 и оставляет тип без `disable` и без `release`. Такт общий с SYSCFG
-(`CFGCMPEN`), поэтому `release` его не гасит. EXTI не реализован, прерывание от
-компаратора пока недоступно.
+(`CFGCMPEN`), поэтому `release` его не гасит. Выход заведён на линию 21 EXTI, на
+плате это не проверялось.
+
+**EXTI** (`src/exti.rs`) — внешние прерывания и события, 21 линия.
+`ExtiExt::split` съедает периферию и отдаёт по токену на линию; зарезервированных
+номеров в структуре нет. Линии 0–15 приходят как `ExtiLine<N, PinSrc>` и берут
+ногу через `source(syscfg, pin)`, который пишет `EXTISS` и оставляет ногу у
+себя — до неё ведут `pin` / `pin_mut`, а `release` возвращает её, погасив линию.
+Линии 16, 17, 19, 21 и 25 — `InternalSrc`, ноги не требуют. `edge(EdgeTrigger)`
+ставит `RTEN` / `FTEN`; `listen` / `unlisten` / `is_listening` управляют выходом
+в NVIC, `listen_event` / `unlisten_event` / `is_listening_event` — событийным;
+`pend` поднимает линию программно, `is_pending` / `clear_interrupt` работают с
+флагом. `PD` взводится только на тракте прерывания. Линии от ног делят три
+вектора (`EXTI0_1`, `EXTI2_3`, `EXTI4_15`), поэтому обработчик спрашивает, чей
+флаг; внутренние линии приходят на вектор своей периферии. Порта C здесь нет,
+как и в `gpio`.
+
+**SYSCFG** (`src/syscfg.rs`) — `constrain(rcu)` забирает периферию и включает
+`CFGCMPEN`, такт общий с CMP. Покрыт только `EXTISS`, и непублично: порт
+выбирается через `ExtiLine::source`. Ремапы `PA11` / `PA12` и DMA не реализованы.
 
 **Прелюдия** (`src/prelude.rs`) — разбита по периферии (`prelude::gpio`, `::rcu`,
-`::dma`, `::fmc`, `::adc`, `::spi`, `::i2c`, `::timer`, `::watchdog`, `::time`,
-`::usart`). У `usart` есть `io` и `nb` под два стиля последовательного API — одно
+`::dma`, `::fmc`, `::adc`, `::spi`, `::i2c`, `::timer`, `::watchdog`, `::exti`,
+`::syscfg`, `::time`, `::usart`). У `usart` есть `io` и `nb` под два стиля последовательного API — одно
 или другое: их `read`/`write` ложатся на один тип, и два одноимённых трейта в
 области видимости делают вызов неоднозначным (`E0034`).
 `use gd32e2_hal::prelude::*;` берёт всё и `usart::io`. Трейты реэкспортированы под
@@ -663,11 +699,9 @@ probe-rs read  --chip GD32E230K8 b32 0x48000014 1   # например GPIOA_OCT
 
 **Периферия, не покрытая вовсе**
 
-- [ ] `EXTI` и `SYSCFG` — внешние события на ногах, источник пробуждения из сна и
-      выбор источника `EXTI`. Там же ремап `PA11`/`PA12` на площадки `PA9`/`PA10`
-      ниже 32 выводов и вторая карта каналов DMA.
-- [ ] `PMU` — sleep / deep-sleep / standby, wakeup-нога, LDO. Пробуждение требует
-      сначала `EXTI`.
+- [ ] `PMU` — sleep / deep-sleep / standby, wakeup-нога, LDO.
+- [ ] Остаток `SYSCFG` — ремап `PA11`/`PA12` на площадки `PA9`/`PA10` ниже
+      32 выводов и вторая карта каналов DMA.
 - [ ] `embedded-storage` (`ReadNorFlash` / `NorFlash`) поверх FMC.
 - [ ] `RTC` — календарь. Без кварца пойдёт от IRC40K, с его же точностью.
 

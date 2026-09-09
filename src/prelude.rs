@@ -24,6 +24,11 @@ pub mod dma {
     pub use crate::dma::DmaExt as _;
 }
 
+/// EXTI entry point.
+pub mod exti {
+    pub use crate::exti::ExtiExt as _;
+}
+
 /// Flash controller entry point.
 pub mod fmc {
     pub use crate::fmc::FmcExt as _;
@@ -48,6 +53,11 @@ pub mod rcu {
 /// SPI transfers.
 pub mod spi {
     pub use embedded_hal::spi::SpiBus as _;
+}
+
+/// System configuration entry point.
+pub mod syscfg {
+    pub use crate::syscfg::SyscfgExt as _;
 }
 
 /// Suffixes for durations and frequencies: `500.millis()`, `100.kHz()`.
@@ -84,11 +94,13 @@ pub mod usart {
 
 pub use self::adc::*;
 pub use self::dma::*;
+pub use self::exti::*;
 pub use self::fmc::*;
 pub use self::gpio::*;
 pub use self::i2c::*;
 pub use self::rcu::*;
 pub use self::spi::*;
+pub use self::syscfg::*;
 pub use self::time::*;
 pub use self::timer::*;
 pub use self::usart::io::*;
